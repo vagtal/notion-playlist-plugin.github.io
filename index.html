@@ -3,10 +3,15 @@
 <head>
 </head>
 <body>
-
+<div style="margin-bottom: 5px;">
+	<button onclick="add()">Add</button>
+	<button onclick="next()">Next</button>
+	<button onclick="previous()">Prev</button>
+</div>
 <div id="ytplayer"></div>
 
 <script>
+  var playlist = JSON.parse(localStorage.getItem('playlist') || '[]');
   // Load the IFrame Player API code asynchronously.
   var tag = document.createElement('script');
   tag.src = "https://www.youtube.com/player_api";
@@ -20,8 +25,51 @@
     player = new YT.Player('ytplayer', {
       height: '360',
       width: '640',
-      videoId: 'M7lc1UVf-VE'
+      events: {
+        'onReady': onPlayerReady
+      }
     });
+  }
+  function onPlayerReady(){
+	if (playlist.length >= 1) {
+     player.loadVideoById(playlist[0]);
+     player.playVideo();
+	}
+  }
+  
+  function add(){
+	var item = prompt("Please enter your name", "");
+	if (item !== null && item?.length > 0) {
+		var video_id = item.split('v=')[1];
+		var ampersandPosition = video_id.indexOf('&');
+		if(ampersandPosition != -1) {
+		  video_id = video_id.substring(0, ampersandPosition);
+		}
+		playlist.push(video_id);
+		localStorage.setItem('playlist', JSON.stringify(playlist));
+		if (playlist.length == 1) {
+			onPlayerReady();
+		}
+	}
+  }
+  function next() {
+	if (playlist.length > 1) {
+		var index = playlist.indexOf(player.getVideoData().video_id);
+		if (index !== -1 && index !== playlist.length) {
+			player.loadVideoById(playlist[index + 1]);
+			player.playVideo();
+		}
+	}
+  }
+  
+  function previous() {
+	if (playlist.length > 1) {
+		var index = playlist.indexOf(player.getVideoData().video_id);
+		if (index !== -1 && index > 0) {
+			player.loadVideoById(playlist[index - 1]);
+			player.playVideo();
+		}
+	}
   }
 </script>
 </body>
