@@ -26,12 +26,10 @@
 		//console.log(a.data()?.name)
 
 		window.addVid = async (playlist, data) => {
-			console.log(playlist, data)
 			return await setDoc(doc(db, playlist, data.name), data);
 		}
 
 		window.getPlaylist = async (playlist) => {
-			console.log(playlist)
 			var vids = [];
 			var docs = await getDocs(query(collection(db, playlist)));
 			docs.forEach(doc => {
@@ -160,16 +158,12 @@
   // YouTube player after the API code downloads.
   var player;
   async function onYouTubePlayerAPIReady() {
-	await renderGames();
-	if (document.getElementById('select').value) {
-  		await getVids();
-	}
     player = new YT.Player('ytplayer', {
       height: '260',
       width: '440',
 	  fitToBackground: true,
       events: {
-        'onReady': await onPlayerReady
+        'onReady': await finishYTload
       },
       playerVars: {
 		'loop': 1,
@@ -178,6 +172,14 @@
 		'fs': 0
 	  }
     });
+  }
+
+  async function finishYTload() {
+	await renderGames();
+	if (document.getElementById('select').value) {
+  		await getVids();
+	}
+	await onPlayerReady();
   }
 
   function removeOptions(selectElement) {
