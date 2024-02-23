@@ -1,12 +1,20 @@
 <!doctype html>
 <html lang="es-ES">
 <head>
+	<style>
+		.hidden {
+			display: none;
+		}
+	</style>
 </head>
 <body>
-<div style="margin-bottom: 5px;">
+<div class="inputs">
+	<input type="text" id="URL" placeholder="URL"/>
 	<button onclick="add()">Add</button>
-	<button onclick="next()">Next</button>
+</div>
+<div style="margin-bottom: 5px;">
 	<button onclick="previous()">Prev</button>
+	<button onclick="next()">Next</button>
 </div>
 <div id="ytplayer"></div>
 
@@ -23,8 +31,8 @@
   var player;
   function onYouTubePlayerAPIReady() {
     player = new YT.Player('ytplayer', {
-      height: '360',
-      width: '640',
+      height: '260',
+      width: '440',
       events: {
         'onReady': onPlayerReady
       }
@@ -38,7 +46,7 @@
   }
   
   function add(){
-	var item = prompt("Please enter your name", "");
+	var item = document.getElementById('URL').value;
 	if (item !== null && item?.length > 0) {
 		var video_id = item.split('v=')[1];
 		var ampersandPosition = video_id.indexOf('&');
@@ -46,6 +54,7 @@
 		  video_id = video_id.substring(0, ampersandPosition);
 		}
 		playlist.push(video_id);
+		document.getElementById('URL').value = '';
 		localStorage.setItem('playlist', JSON.stringify(playlist));
 		if (playlist.length == 1) {
 			onPlayerReady();
@@ -55,7 +64,7 @@
   function next() {
 	if (playlist.length > 1) {
 		var index = playlist.indexOf(player.getVideoData().video_id);
-		if (index !== -1 && index !== playlist.length) {
+		if (index !== -1 && index !== playlist.length - 1) {
 			player.loadVideoById(playlist[index + 1]);
 			player.playVideo();
 		}
