@@ -66,11 +66,29 @@
 		.control {
 			flex: 1;
 		}
-		.form {
-			width: 450px;
-		}
 		.hidden {
 			display: none !important;
+		}
+		#load, #spinner {
+			display: flex;
+			justify-content: center;
+			min-height: 290px;
+			align-items: center;
+		}
+		#load button {
+			padding: 5px 10px;    
+			padding-left: 20px;
+    		position: relative;
+		}
+		#load button span {			
+			position: absolute;
+    		left: 5px;
+		}
+		.invisible {
+			visibility: hidden;
+		}
+		.form {
+			width: 450px;
 		}
 		#games, #inputs {
 			display: inline-block;
@@ -124,33 +142,71 @@
 			border-radius: 50%;
 			position: relative;
 		}
+		@-webkit-keyframes rotating /* Safari and Chrome */ {
+			from {
+				-webkit-transform: rotate(0deg);
+				-o-transform: rotate(0deg);
+				transform: rotate(0deg);
+			}
+			to {
+				-webkit-transform: rotate(360deg);
+				-o-transform: rotate(360deg);
+				transform: rotate(360deg);
+			}
+			}
+			@keyframes rotating {
+			from {
+				-ms-transform: rotate(0deg);
+				-moz-transform: rotate(0deg);
+				-webkit-transform: rotate(0deg);
+				-o-transform: rotate(0deg);
+				transform: rotate(0deg);
+			}
+			to {
+				-ms-transform: rotate(360deg);
+				-moz-transform: rotate(360deg);
+				-webkit-transform: rotate(360deg);
+				-o-transform: rotate(360deg);
+				transform: rotate(360deg);
+			}
+		}
+		.rotating {
+			-webkit-animation: rotating 2s linear infinite;
+			-moz-animation: rotating 2s linear infinite;
+			-ms-animation: rotating 2s linear infinite;
+			-o-animation: rotating 2s linear infinite;
+			animation: rotating 2s linear infinite;
+		}
 	</style>
 </head>
 <body>
-	<div class="controls">
-		<div class="form" style="margin-bottom: 5px;">
-			<span class="eye" onclick="toggleInputs()">👁</span>
-			<div id="games">
-				<select onchange="getVids()" id="select"></select>
-				<input type="text" id="game" placeholder="Game"/>
-				<button onclick="addGame()">Add</button>
+	<div id="load"><button onclick="init()"><span class="rotating">⟳</span>Load</button></div>
+	<div id="spinner" class="hidden rotating">⟳</div>
+	<div id="content" class="invisible">
+		<div class="controls">
+			<div class="form" style="margin-bottom: 5px;">
+				<span class="eye" onclick="toggleInputs()">👁</span>
+				<div id="games">
+					<select onchange="getVids()" id="select"></select>
+					<input type="text" id="game" placeholder="Game"/>
+					<button onclick="addGame()">Add</button>
+				</div>
+				<div id="inputs" class="hidden">
+					<input type="text" id="URL" placeholder="URL"/>
+					<input type="text" id="name" placeholder="Name"/>
+					<button onclick="add()">Add</button>
+				</div>
 			</div>
-			<div id="inputs" class="hidden">
-				<input type="text" id="URL" placeholder="URL"/>
-				<input type="text" id="name" placeholder="Name"/>
-				<button onclick="add()">Add</button>
+			<div class="control" style="margin-bottom: 5px;">
+				<button onclick="previous()">Prev</button>
+				<button onclick="next()">Next</button>
 			</div>
 		</div>
-		<div class="control" style="margin-bottom: 5px;">
-			<button onclick="previous()">Prev</button>
-			<button onclick="next()">Next</button>
+		<div class="body">
+			<div id="ytplayer"></div>
+			<div id="list"></div>
 		</div>
 	</div>
-	<div class="body">
-		<div id="ytplayer"></div>
-		<div id="list"></div>
-	</div>
-
 <script>
   var playlist = [];//JSON.parse(localStorage.getItem('playlist') || '[]');
   var gameSelected = '';
@@ -171,7 +227,7 @@
       width: '440',
 	  fitToBackground: true,
       events: {
-        'onReady': await finishYTload
+  //      'onReady': await init
       },
       playerVars: {
 		'loop': 1,
@@ -182,8 +238,15 @@
     });
   }
 
-  async function finishYTload() {
+  async function init() {
+	var content = document.getElementById('content');
+	var spinner = document.getElementById('spinner');
+	var load = document.getElementById('load');
+	load.classList.add('hidden');
+	spinner.classList.remove('hidden');
 	await renderGames();
+	spinner.classList.add('hidden');
+	content.classList.remove('invisible');
 	if (document.getElementById('select').value) {
   		await getVids();
 	}
