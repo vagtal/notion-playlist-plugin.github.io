@@ -4,7 +4,7 @@
 	<script type="module">
 		// Import the functions you need from the SDKs you need
 		import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    	import { getFirestore, query, addDoc, getDocs, getDoc, doc, setDoc, collection } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+    	import { getFirestore, where, deleteDoc, query, addDoc, getDocs, getDoc, doc, setDoc, collection } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 		// TODO: Add SDKs for Firebase products that you want to use
 		// https://firebase.google.com/docs/web/setup#available-libraries
 		
@@ -45,6 +45,14 @@
 				games.push(doc.data());
 			});
 			return games;
+		}
+
+		window.deleteVid = async (playlist, id) => {
+			var q = query(collection(db, playlist), where("id", "==", id));
+			var querySnapshot = await getDocs(q);
+			await querySnapshot.forEach(async (document) => {
+				await deleteDoc(doc(db, playlist, document.id));
+			});
 		}
 
 		window.saveGame = async (game) => {
@@ -244,13 +252,12 @@
   }
 
   function next() {
-	if (playlist.length > 1) {
-		var index = playlist.findIndex(item => item.id == player.getVideoData().video_id);
-		if (index !== -1 && playing < playlist.length - 1) {
-			player.loadVideoById(playlist[index + 1].id);
+	if (playlist.length > 1) {		
+		if (playing < playlist.length - 1) {
+			playing = playing + 1;
+			player.loadVideoById(playlist[playing].id);
 			player.playVideo();
        		player.setLoop(1);
-			playing = playing + 1;
 			render();
 		}
 	}
@@ -258,12 +265,11 @@
   
   function previous() {
 	if (playlist.length > 1) {
-		var index = playlist.findIndex(item => item.id == player.getVideoData().video_id);
-		if (index !== -1 && playing > 0) {
-			player.loadVideoById(playlist[index - 1].id);
+		if (playing > 0) {
+			playing = playing - 1;
+			player.loadVideoById(playlist[playing].id);
 			player.playVideo();
         	player.setLoop(1);
-			playing = playing - 1;
 			render();
 		}
 	}
@@ -297,9 +303,13 @@ async function deleteItem(e, i) {
 	var evt = e ? e:window.event;
 	if (evt.stopPropagation)    evt.stopPropagation();
 	if (evt.cancelBubble!=null) evt.cancelBubble = true;
-	playlist = playlist.filter((item, idx) => idx != i);
+	await window.deleteVid(document.getElementById('select').value, playlist[i].id);
   	await getVids();
 	render();
+	if (playing > playlist.length - 1) {
+		playing = playlist.length - 1;
+	}
+	play(playing)
 }
 
 function render() {
