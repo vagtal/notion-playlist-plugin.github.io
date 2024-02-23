@@ -1,27 +1,157 @@
 <!doctype html>
 <html lang="es-ES">
 <head>
+	<script type="module">
+		// Import the functions you need from the SDKs you need
+		import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    	import { getFirestore, query, addDoc, getDocs, getDoc, doc, setDoc, collection } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+		// TODO: Add SDKs for Firebase products that you want to use
+		// https://firebase.google.com/docs/web/setup#available-libraries
+		
+		// Your web app's Firebase configuration
+		const firebaseConfig = {
+			apiKey: "AIzaSyAR4TBbZABY-_kek_9aWZfaboGMoaT-3UE",
+			authDomain: "notion-db-35221.firebaseapp.com",
+			projectId: "notion-db-35221",
+			storageBucket: "notion-db-35221.appspot.com",
+			messagingSenderId: "421459617996",
+			appId: "1:421459617996:web:58f1f3ffaf9694877c7a69"
+		};
+		// Initialize Firebase
+		var app = initializeApp(firebaseConfig);
+		var db = getFirestore(app);
+
+		/**/
+		//var a = await getDoc(doc(db,'citieas', 'LAa'))
+		//console.log(a.data()?.name)
+
+		window.addVid = async (playlist, data) => {
+			console.log(playlist, data)
+			return await setDoc(doc(db, playlist, data.name), data);
+		}
+
+		window.getPlaylist = async (playlist) => {
+			console.log(playlist)
+			var vids = [];
+			var docs = await getDocs(query(collection(db, playlist)));
+			docs.forEach(doc => {
+				vids.push(doc.data());
+			});
+			return vids;
+		}
+
+		window.recoverGames = async () => {
+			var games = [];
+			var gameDocs = await getDocs(query(collection(db, "games")));
+			gameDocs.forEach(doc => {
+				games.push(doc.data());
+			});
+			return games;
+		}
+
+		window.saveGame = async (game) => {
+			return await addDoc(collection(db, "games"), {name: game})
+		}
+	  </script>
 	<style>
+		.controls {
+			display: flex;
+		}
+		.control {
+			flex: 1;
+		}
+		.form {
+			width: 450px;
+		}
 		.hidden {
-			display: none;
+			display: none !important;
+		}
+		#games, #inputs {
+			display: inline-block;
+		}
+		.body {
+			display: flex;
+		}
+		#list {
+			flex: 1;
+			height: 260px;
+			overflow: auto;
+			max-width: 257px;
+		}
+		.playing {
+			background-color: lightgray;
+		}
+		.list-element {
+			padding: 15px;
+			cursor: pointer;
+			margin-left: 10px;
+			width: 200px;
+			display: flex;
+		}
+		select {
+			max-width: 202px;
+		}
+		.name {
+			flex: 1;
+		}
+		.delete {
+			color: red;
+		}
+		.delete:hover {
+			padding: 5px;
+			background-color: black;
+			border-radius: 50%;
+			line-height: 8px;
+			position: relative;
+			left: 4px;
+		}
+		.list-element:hover {
+			background-color: gray;
+			color: white;
+		}
+		.eye {
+			cursor: pointer;
+		}
+		.eye:hover {
+			background-color: black;
+			color: white;
+			border-radius: 50%;
+			position: relative;
 		}
 	</style>
 </head>
 <body>
-<div class="inputs">
-	<input type="text" id="URL" placeholder="URL"/>
-	<button onclick="add()">Add</button>
-</div>
-<div style="margin-bottom: 5px;">
-	<button onclick="previous()">Prev</button>
-	<button onclick="next()">Next</button>
-</div>
-<div id="ytplayer"></div>
+	<div class="controls">
+		<div class="form" style="margin-bottom: 5px;">
+			<span class="eye" onclick="toggleInputs()">👁</span>
+			<div id="games">
+				<select onchange="getVids()" id="select"></select>
+				<input type="text" id="game" placeholder="Game"/>
+				<button onclick="addGame()">Add</button>
+			</div>
+			<div id="inputs" class="hidden">
+				<input type="text" id="URL" placeholder="URL"/>
+				<input type="text" id="name" placeholder="Name"/>
+				<button onclick="add()">Add</button>
+			</div>
+		</div>
+		<div class="control" style="margin-bottom: 5px;">
+			<button onclick="previous()">Prev</button>
+			<button onclick="next()">Next</button>
+		</div>
+	</div>
+	<div class="body">
+		<div id="ytplayer"></div>
+		<div id="list"></div>
+	</div>
 
 <script>
-  var playlist = JSON.parse(localStorage.getItem('playlist') || '[]');
+  var playlist = [];//JSON.parse(localStorage.getItem('playlist') || '[]');
+  var gameSelected = '';
+  var appName = 'notion-db-'
   // Load the IFrame Player API code asynchronously.
   var tag = document.createElement('script');
+  var playing = 0;
   tag.src = "https://www.youtube.com/player_api";
   var firstScriptTag = document.getElementsByTagName('script')[0];
   firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
@@ -29,57 +159,155 @@
   // Replace the 'ytplayer' element with an <iframe> and
   // YouTube player after the API code downloads.
   var player;
-  function onYouTubePlayerAPIReady() {
+  async function onYouTubePlayerAPIReady() {
+	await renderGames();
+	if (document.getElementById('select').value) {
+  		await getVids();
+	}
     player = new YT.Player('ytplayer', {
       height: '260',
       width: '440',
+	  fitToBackground: true,
       events: {
-        'onReady': onPlayerReady
-      }
+        'onReady': await onPlayerReady
+      },
+      playerVars: {
+		'loop': 1,
+        'showinfo': 0, 
+		'rel': 0,
+		'fs': 0
+	  }
     });
   }
+
+  function removeOptions(selectElement) {
+	var i, L = selectElement.options.length - 1;
+	for(i = L; i >= 0; i--) {
+		selectElement.remove(i);
+	}
+  }
+
+  async function renderGames() {	
+	var games = await window.recoverGames();
+	var select = document.getElementById('select');
+	removeOptions(select);
+	games.forEach(game => {
+		var option = document.createElement('option');
+		option.setAttribute('value', game.name);
+		option.appendChild(document.createTextNode(game.name));
+		select.appendChild(option);
+	});
+  }
+
   function onPlayerReady(){
 	if (playlist.length >= 1) {
-     player.loadVideoById(playlist[0]);
-     player.playVideo();
+		player.loadVideoById(playlist[0].id);
+		player.playVideo();
+        player.setLoop(1);
+		render();
+	}
+  }
+
+  function toggleInputs() {
+	var inputs = document.getElementById('inputs');
+	var games = document.getElementById('games');
+	if (inputs.classList.contains('hidden')) {
+		inputs.classList.remove('hidden');
+		games.classList.add('hidden');
+	} else {
+		inputs.classList.add('hidden');
+		games.classList.remove('hidden');
 	}
   }
   
-  function add(){
+  async function add(){
 	var item = document.getElementById('URL').value;
-	if (item !== null && item?.length > 0) {
+	var itemName = document.getElementById('name').value;
+	if (item !== null && item?.length > 0 && itemName !== null && itemName?.length > 0) {
 		var video_id = item.split('v=')[1];
 		var ampersandPosition = video_id.indexOf('&');
 		if(ampersandPosition != -1) {
 		  video_id = video_id.substring(0, ampersandPosition);
 		}
-		playlist.push(video_id);
 		document.getElementById('URL').value = '';
-		localStorage.setItem('playlist', JSON.stringify(playlist));
+		document.getElementById('name').value = '';
+		//localStorage.setItem('playlist', JSON.stringify(playlist));
+		await window.addVid(document.getElementById('select').value, {id: video_id, name: itemName});
+		await getVids();
 		if (playlist.length == 1) {
 			onPlayerReady();
-		}
+		} else {}
+		render();
 	}
   }
+
   function next() {
 	if (playlist.length > 1) {
-		var index = playlist.indexOf(player.getVideoData().video_id);
-		if (index !== -1 && index !== playlist.length - 1) {
-			player.loadVideoById(playlist[index + 1]);
+		var index = playlist.findIndex(item => item.id == player.getVideoData().video_id);
+		if (index !== -1 && playing < playlist.length - 1) {
+			player.loadVideoById(playlist[index + 1].id);
 			player.playVideo();
+       		player.setLoop(1);
+			playing = playing + 1;
+			render();
 		}
 	}
   }
   
   function previous() {
 	if (playlist.length > 1) {
-		var index = playlist.indexOf(player.getVideoData().video_id);
-		if (index !== -1 && index > 0) {
-			player.loadVideoById(playlist[index - 1]);
+		var index = playlist.findIndex(item => item.id == player.getVideoData().video_id);
+		if (index !== -1 && playing > 0) {
+			player.loadVideoById(playlist[index - 1].id);
 			player.playVideo();
+        	player.setLoop(1);
+			playing = playing - 1;
+			render();
 		}
 	}
   }
+
+  async function getVids() {
+	var select = document.getElementById('select').value;
+	var vids = await window.getPlaylist(select);
+	playlist = vids;
+	render();
+
+  }
+
+  async function addGame() {
+	var itemName = document.getElementById('game').value;
+	await saveGame(itemName);
+	document.getElementById('game').value = '';
+	renderGames();
+  }
+
+  function play(index) {
+	player.loadVideoById(playlist[index].id);
+	player.playVideo();
+	player.setLoop(1);
+	playing = index;
+	render();
+
+  }
+
+async function deleteItem(e, i) {
+	var evt = e ? e:window.event;
+	if (evt.stopPropagation)    evt.stopPropagation();
+	if (evt.cancelBubble!=null) evt.cancelBubble = true;
+	playlist = playlist.filter((item, idx) => idx != i);
+  	await getVids();
+	render();
+}
+
+function render() {
+	var list = document.getElementById('list');
+	let html = '';
+	playlist.forEach((element, idx) => {
+		html += `<div onclick="play(${idx})" class="list-element ${idx == playing ? 'playing' : ''}" index="${idx}"><span class="name">${element.name}</span> <span class="delete" onclick="deleteItem(event, ${idx})">X</span></div>`;
+	});
+	list.innerHTML = html;
+}
 </script>
 </body>
 </html>
