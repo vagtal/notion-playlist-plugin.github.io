@@ -65,6 +65,10 @@
 		}
 		.control {
 			flex: 1;
+			display: flex;
+			width: 230px;
+			max-width: 230px;
+			align-items: center;
 		}
 		.hidden {
 			display: none !important;
@@ -181,6 +185,11 @@
 			-o-animation: rotating 2s linear infinite;
 			animation: rotating 2s linear infinite;
 		}
+		.navigation {
+			display: inline-block;
+			flex: 1;
+			text-align: right;
+		}
 	</style>
 </head>
 <body>
@@ -202,8 +211,12 @@
 				</div>
 			</div>
 			<div class="control" style="margin-bottom: 5px;">
-				<button onclick="previous()">Prev</button>
-				<button onclick="next()">Next</button>
+				<input type="checkbox" onclick="getVids()" id="date" />
+				<label id="date" for="date" onclick="getVids()">Date</label>
+				<div class="navigation">
+					<button onclick="previous()">Prev</button>
+					<button onclick="next()">Next</button>
+				</div>
 			</div>
 		</div>
 		<div class="body">
@@ -251,6 +264,10 @@
 	await renderGames();
 	spinner.classList.add('hidden');
 	content.classList.remove('invisible');
+	console.log(document.getElementById('select'))
+	if (document.getElementById('select')?.options?.length > 0) {
+		toggleInputs();
+	}
 	if (document.getElementById('select').value) {
   		await getVids();
 	}
@@ -309,7 +326,7 @@
 		document.getElementById('URL').value = '';
 		document.getElementById('name').value = '';
 		//localStorage.setItem('playlist', JSON.stringify(playlist));
-		await window.addVid(document.getElementById('select').value, {id: video_id, name: itemName});
+		await window.addVid(document.getElementById('select').value, {id: video_id, name: itemName, timestamp: new Date().getTime()});
 		await getVids();
 		if (playlist.length == 1) {
 			onPlayerReady();
@@ -345,6 +362,11 @@
   async function getVids() {
 	var select = document.getElementById('select').value;
 	var vids = await window.getPlaylist(select);
+	if (document.getElementById('date').checked) {
+		vids.sort(function(x, y){
+			return x.timestamp - y.timestamp;
+		});
+	}
 	playlist = vids;
 	render();
 
