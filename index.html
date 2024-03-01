@@ -60,7 +60,7 @@
 		}
 	  </script>
 	<style>
-		.controls {
+		#content {
 			display: flex;
 		}
 		.control {
@@ -99,7 +99,8 @@
 			visibility: hidden;
 		}
 		.form {
-			width: 450px;
+			width: 438px;
+			min-width: 438px;
 		}
 		#games, #inputs {
 			display: inline-block;
@@ -112,6 +113,7 @@
 			height: 260px;
 			overflow: auto;
 			max-width: 257px;
+			overflow-x: hidden;
 		}
 		.playing {
 			background-color: lightgray;
@@ -120,7 +122,7 @@
 			padding: 15px;
 			cursor: pointer;
 			margin-left: 10px;
-			width: 200px;
+			width: 190px;
 			display: flex;
 		}
 		select {
@@ -131,6 +133,7 @@
 		}
 		.delete {
 			color: red;
+			margin-right: 10px;
 		}
 		.delete:hover {
 			padding: 4px;
@@ -147,6 +150,7 @@
 		}
 		.eye {
 			cursor: pointer;
+			padding: 5px;
 		}
 		.eye:hover {
 			background-color: black;
@@ -193,39 +197,82 @@
 			display: inline-block;
 			flex: 1;
 			text-align: right;
+			margin-bottom: 6px;
+		}
+		@media (max-width: 675px) {
+			#content {
+				display: block;
+			}
+			.control {
+			    display: flex;
+			}
+			.navigation span {
+				text-align: center;
+			}
+			.navigation button {
+			    margin: 0 auto;
+			}
+			.navigation {
+			    flex: none;
+				width: 100px;
+			}
+			.navigation span {
+				margin-top: 5px;
+			}
+			.navigation span, .navigation button{
+				display: block;
+				margin-bottom: 15px;
+				padding: 10px;
+			}
+			.control {
+				width: 430px;
+				max-width: 430px;
+				align-items: normal;
+			}
+			#list {
+			    max-width: none;
+			}
+			#list .list-element  {
+				width: auto;
+			}
+		}
+		@media (prefers-color-scheme: dark) {
+			
 		}
 	</style>
 </head>
 <body>
 	<div id="load"><button onclick="init()"><span class="rotating">⟳</span>Load</button></div>
 	<div id="spinner" class="hidden rotating">⟳</div>
-	<div id="content" class="invisible">
-		<div class="controls">
-			<div class="form" style="margin-bottom: 5px;">
-				<span class="eye" onclick="toggleInputs()">👁</span>
-				<div id="games">
-					<select onchange="getVids()" id="select"></select>
-					<input type="text" id="game" placeholder="Game"/>
-					<button onclick="addGame()">Add</button>
-				</div>
-				<div id="inputs" class="hidden">
-					<input type="text" id="URL" placeholder="URL"/>
-					<input type="text" id="name" placeholder="Name"/>
-					<button onclick="add()">Add</button>
-				</div>
-			</div>
+		<div class="body">
+				<div id="content" class="invisible">
+					<div class="controls">
+						<div class="form" style="margin-bottom: 5px;">
+							<span class="eye" onclick="toggleInputs()">👁</span>
+							<div id="games">
+								<select onchange="getVids()" id="select"></select>
+								<input type="text" id="game" placeholder="Game"/>
+								<button onclick="addGame()">Add</button>
+							</div>
+							<div id="inputs" class="hidden">
+								<input type="text" id="URL" placeholder="URL"/>
+								<input type="text" id="name" placeholder="Name"/>
+								<button onclick="add()">Add</button>
+							</div>
+						</div>
+						<div id="ytplayer"></div>
+					</div>			
 			<div class="control" style="margin-bottom: 5px;">
-				<input type="checkbox" onclick="getVids()" id="date" />
-				<label id="date" for="date" onclick="getVids()">Date</label>
 				<div class="navigation">
+					<span>
+						<input type="checkbox" onclick="getVids()" id="date" />
+						<label id="date" for="date" onclick="getVids()">Date</label>
+					</span>
 					<button onclick="previous()">Prev</button>
 					<button onclick="next()">Next</button>
 				</div>
+				<div id="list"></div>
 			</div>
-		</div>
-		<div class="body">
-			<div id="ytplayer"></div>
-			<div id="list"></div>
 		</div>
 	</div>
 <script>
