@@ -101,6 +101,8 @@
 		.form {
 			width: 438px;
 			min-width: 438px;
+			display: flex;
+			align-items: center;
 		}
 		#games, #inputs {
 			display: inline-block;
@@ -150,7 +152,9 @@
 		}
 		.eye {
 			cursor: pointer;
-			padding: 5px;
+			margin: 5px;
+			width: 16px;
+			padding: 0 3px;
 		}
 		.eye:hover {
 			background-color: black;
@@ -197,7 +201,7 @@
 			display: inline-block;
 			flex: 1;
 			text-align: right;
-			margin-bottom: 6px;
+			margin-bottom: 9px;
 		}
 		@media (max-width: 675px) {
 			#content {
@@ -249,7 +253,7 @@
 		<div class="body">
 				<div id="content" class="invisible">
 					<div class="controls">
-						<div class="form" style="margin-bottom: 5px;">
+						<div class="form">
 							<span class="eye" onclick="toggleInputs()">👁</span>
 							<div id="games">
 								<select onchange="getVids()" id="select"></select>
