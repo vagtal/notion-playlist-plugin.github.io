@@ -65,7 +65,7 @@
 		}
 		.control {
 			flex: 1;
-			display: flex;
+			/* display: flex; */
 			width: 230px;
 			max-width: 230px;
 			align-items: center;
@@ -83,8 +83,10 @@
 			left: 0;
 			right: 0;
 		}
-		#load button {
+		button, select, input[type='checkbox'] {
 		    cursor: pointer;
+		}
+		#load button {
 			padding: 5px 10px;    
 			padding-left: 20px;
     		position: relative;
@@ -131,7 +133,8 @@
 			color: red;
 		}
 		.delete:hover {
-			padding: 5px;
+			padding: 4px;
+			padding-right: 3px;
 			background-color: black;
 			border-radius: 50%;
 			line-height: 8px;
