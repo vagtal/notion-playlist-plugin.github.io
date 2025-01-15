@@ -4,7 +4,7 @@
 	<script type="module">
 		// Import the functions you need from the SDKs you need
 		import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    	import { getFirestore, where, deleteDoc, query, addDoc, getDocs, getDoc, doc, setDoc, collection } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+    	import { getFirestore, where, updateDoc, deleteDoc, query, addDoc, getDocs, getDoc, doc, setDoc, collection } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 		// TODO: Add SDKs for Firebase products that you want to use
 		// https://firebase.google.com/docs/web/setup#available-libraries
 		
@@ -17,16 +17,25 @@
 			messagingSenderId: "421459617996",
 			appId: "1:421459617996:web:58f1f3ffaf9694877c7a69"
 		};
+
 		// Initialize Firebase
 		var app = initializeApp(firebaseConfig);
 		var db = getFirestore(app);
 
-		/**/
-		//var a = await getDoc(doc(db,'citieas', 'LAa'))
-		//console.log(a.data()?.name)
-
 		window.addVid = async (playlist, data) => {
 			return await setDoc(doc(db, playlist, data.name), data);
+		}
+
+		window.changeFavourite = async (game) => {
+			var docs = await getDocs(collection(db, 'games'));
+			await docs.forEach(doc => {
+				if (doc.data().favourite) {
+					updateDoc(doc.ref, {favourite: false});
+				}
+				if (doc.data().name === game) {
+					updateDoc(doc.ref, {favourite: true});
+				}
+			});
 		}
 
 		window.getPlaylist = async (playlist) => {
@@ -81,6 +90,14 @@
 		.hidden {
 			display: none !important;
 		}
+		#favourite::before {
+			content: '☆';
+			color: black;
+		}
+		#favourite.favouriteSelected::before {
+			content: '★';
+			color: black;
+		}
 		#load, #spinner {
 			display: flex;
 			justify-content: center;
@@ -105,10 +122,12 @@
 		}
 		.invisible {
 			visibility: hidden;
+			overflow: hidden;
+			height: 0;
 		}
 		.form {
-			width: 438px;
-			min-width: 438px;
+			width: 466px;
+			min-width: 466px;
 			display: flex;
 			align-items: center;
 		}
@@ -270,6 +289,7 @@
 					<div class="controls">
 						<div class="form">
 							<span class="eye" onclick="toggleInputs()">👁</span>
+							<span class="eye hidden" id="favourite" onclick="favouriteToggle()"></span>
 							<div id="games">
 								<select onchange="getVids()" id="select"></select>
 								<input type="text" id="game" placeholder="Game"/>
@@ -299,6 +319,7 @@
 <script>
   var playlist = [];//JSON.parse(localStorage.getItem('playlist') || '[]');
   var gameSelected = '';
+  var favouriteSelected = '';
   var appName = 'notion-db-'
   // Load the IFrame Player API code asynchronously.
   var tag = document.createElement('script');
@@ -336,7 +357,6 @@
 	await renderGames();
 	spinner.classList.add('hidden');
 	content.classList.remove('invisible');
-	console.log(document.getElementById('select'))
 	if (document.getElementById('select')?.options?.length > 0) {
 		toggleInputs();
 	}
@@ -360,6 +380,10 @@
 	games.forEach(game => {
 		var option = document.createElement('option');
 		option.setAttribute('value', game.name);
+		if (game.favourite) {
+			option.setAttribute('selected', true);
+			favouriteSelected = game.name;
+		}
 		option.appendChild(document.createTextNode(game.name));
 		select.appendChild(option);
 	});
@@ -376,13 +400,16 @@
 
   function toggleInputs() {
 	var inputs = document.getElementById('inputs');
+	var favourite = document.getElementById('favourite');
 	var games = document.getElementById('games');
 	if (inputs.classList.contains('hidden')) {
 		inputs.classList.remove('hidden');
 		games.classList.add('hidden');
+		favourite.classList.add('hidden');
 	} else {
 		inputs.classList.add('hidden');
 		games.classList.remove('hidden');
+		favourite.classList.remove('hidden')
 	}
   }
   
@@ -434,6 +461,7 @@
   async function getVids() {
 	var select = document.getElementById('select').value;
 	var vids = await window.getPlaylist(select);
+	checkFavouriteSelected(select);
 	if (document.getElementById('date').checked) {
 		vids.sort(function(x, y){
 			return x.timestamp - y.timestamp;
@@ -441,7 +469,22 @@
 	}
 	playlist = vids;
 	render();
+  }
 
+  function checkFavouriteSelected(select) {
+	var favourite = document.getElementById('favourite');
+	if (favouriteSelected === select) {
+		favourite.classList.add('favouriteSelected');
+	} else {
+		favourite.classList.remove('favouriteSelected');
+	}
+  }
+
+  async function favouriteToggle() {
+	var select = document.getElementById('select').value;
+	favouriteSelected = select;
+	await window.changeFavourite(select);
+	checkFavouriteSelected(select);
   }
 
   async function addGame() {
